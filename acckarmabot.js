@@ -1,7 +1,15 @@
 var Botkit = require('botkit');
+var PropertiesReader = require('properties-reader');
+
+var properties = PropertiesReader('bot.properties');
+
+var token = properties.get('slack.token');
+console.log(token);
+
 var controller = Botkit.slackbot();
+
 var bot = controller.spawn({
-  token: 'xoxb-62527700996-qW72iJUXGcLiai4TOxPhy5Oa'
+  token: token
 });
 
 var users = [];
