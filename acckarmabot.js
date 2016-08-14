@@ -36,28 +36,12 @@ var initArticles = function(controller) {
     article1.meta = '';
     articles.push(article1);
 
-    console.log(controller.storage);
-    console.log(controller.storage.teams);
-    controller.storage.teams.save({
-        id: article1.name,
-        article: article1
-    }, function(err) {
-        console.log("Error persisting article! " + err);
-    });
-
     var article2 = {};
     article2.name = 'S.O.L.I.D. Principles';
     article2.link = 'http://yashchenkon.tech/SOLID/';
     article2.date = Date.now();
     article2.meta = '';
     articles.push(article2);
-
-    // controller.storage.teams.save({
-    //     id: article2.name,
-    //     article: article2
-    // }, function(err) {
-    //     console.log("Error persisting article! " + err);
-    // });
 
     var article3 = {};
     article3.name = 'The rise and fall of the Gopher protocol';
@@ -66,14 +50,24 @@ var initArticles = function(controller) {
     article3.meta = '';
     articles.push(article3);
 
-    // controller.storage.teams.save({
-    //     id: article3.name,
-    //     article: article3
-    // }, function(err) {
-    //     console.log("Error persisting article! " + err);
-    // });
+    saveArticle(article1);
+    saveArticle(article2);
+    saveArticle(article3);
 
     return articles;
+};
+
+var saveArticle = function(article) {
+    console.log("Persisting article: " + article.name);
+    controller.storage.teams.save({
+        id: article.name,
+        article: article
+    }, function(err) {
+        if (err != null) {
+            console.log("Error persisting article: " + article.name);
+            console.log(err);
+        }
+    });
 };
 
 loadProperties();
