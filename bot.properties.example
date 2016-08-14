@@ -1,0 +1,4 @@
+#this is an example of what a bot.properties file should look like
+bot.name=DragonBot
+slack.token=<SLACK TOKEN HERE>
+storage.location='D:\\Development\\slack-karma-bot\\articlestorage\\'
