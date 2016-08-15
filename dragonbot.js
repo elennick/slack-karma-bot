@@ -1,5 +1,6 @@
 var Botkit = require('botkit');
 var PropertiesReader = require('properties-reader');
+var articlesUtils = require('./articles');
 
 var botName;
 var slackToken;
@@ -26,6 +27,10 @@ var initBot = function(controller) {
     return bot;
 };
 
+var validateUrl = function(value) {
+    return /^(https?|ftp):\/\/(((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:)*@)?(((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5]))|((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?)(:\d*)?)(\/((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)+(\/(([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)*)*)?)?(\?((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|[\uE000-\uF8FF]|\/|\?)*)?(\#((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|\/|\?)*)?$/i.test(value);
+}
+
 var initArticles = function(controller) {
     var articles = [];
 
@@ -50,24 +55,11 @@ var initArticles = function(controller) {
     article3.meta = '';
     articles.push(article3);
 
-    saveArticle(article1);
-    saveArticle(article2);
-    saveArticle(article3);
+    articlesUtils.saveArticle(controller, article1);
+    articlesUtils.saveArticle(controller, article2);
+    articlesUtils.saveArticle(controller, article3);
 
     return articles;
-};
-
-var saveArticle = function(article) {
-    console.log("Persisting article: " + article.name);
-    controller.storage.teams.save({
-        id: article.name,
-        article: article
-    }, function(err) {
-        if (err != null) {
-            console.log("Error persisting article: " + article.name);
-            console.log(err);
-        }
-    });
 };
 
 loadProperties();
@@ -77,7 +69,12 @@ var controller = Botkit.slackbot({
 var articles = initArticles(controller);
 var bot = initBot(controller);
 
-var respond = function(bot, message) {
+// controller.hears(["^@" + botName], ["ambient"], function(bot, message) {
+//     console.log("name heard ambiently");
+//     respond(bot, message);
+// });
+
+controller.on('direct_mention', function(bot, message) {
     if (message.text.match(/random/gi)) {
         var article = articles[Math.floor(Math.random() * articles.length)];
 
@@ -94,14 +91,23 @@ var respond = function(bot, message) {
             icon_emoji: ":unicorn_face:",
         });
     }
-};
-
-controller.hears(["^@" + botName], ["ambient"], function(bot, message) {
-    console.log("name heard ambiently");
-    respond(bot, message);
 });
 
-controller.on('direct_mention', function(bot, message) {
-    console.log("name heard directly");
-    respond(bot, message);
+controller.on([], 'direct_mention', function(bot, message) {
+    if (message.text.match(/random/gi)) {
+        var article = articles[Math.floor(Math.random() * articles.length)];
+
+        var responseText;
+        if (article.name !== undefined) {
+            responseText = article.name + ": " + article.link;
+        } else {
+            responseText = article.link;
+        }
+
+        bot.reply(message, {
+            text: responseText,
+            username: botName,
+            icon_emoji: ":unicorn_face:",
+        });
+    }
 });
